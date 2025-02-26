@@ -6,12 +6,12 @@ import (
 )
 
 type Options struct {
-	c bool
-	d bool
-	u bool
-	f int
-	s int
-	i bool
+	countOccurrences bool
+	repeatedStrings  bool
+	uniqStrings      bool
+	skipFields       int
+	skipChars        int
+	caseInsensitive  bool
 }
 
 func GetParsedFlags() (Options, error) {
@@ -25,17 +25,21 @@ func GetParsedFlags() (Options, error) {
 	flag.Parse()
 
 	options := Options{
-		c: *cFlag,
-		d: *dFlag,
-		u: *uFlag,
-		f: *fFlag,
-		s: *sFlag,
-		i: *iFlag,
+		countOccurrences: *cFlag,
+		repeatedStrings:  *dFlag,
+		uniqStrings:      *uFlag,
+		skipFields:       *fFlag,
+		skipChars:        *sFlag,
+		caseInsensitive:  *iFlag,
 	}
 
-	if options.c && options.d || options.c && options.u || options.u && options.d || options.d && options.i && options.c {
-		err := errors.New("wrong flag sequence provided")
-		return options, err
+	switch {
+	case options.countOccurrences && options.repeatedStrings,
+		options.countOccurrences && options.uniqStrings,
+		options.uniqStrings && options.repeatedStrings,
+		options.repeatedStrings && options.uniqStrings && options.caseInsensitive:
+
+		return options, errors.New("wrong flag sequence provided")
 	}
 
 	return options, nil

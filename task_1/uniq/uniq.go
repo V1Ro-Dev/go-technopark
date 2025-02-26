@@ -1,66 +1,82 @@
 package uniq
 
 import (
-	"strconv"
+	"errors"
+	"fmt"
 	"strings"
 )
 
 func skipFields(str string, opt Options) string {
 	fields := strings.Split(str, " ")
-	if len(fields) < opt.f {
+	if len(fields) < opt.skipFields {
 		return ""
 	}
-	return strings.Join(fields[opt.f:], " ")
+	return strings.Join(fields[opt.skipFields:], " ")
 }
 
 func skipChars(str string, opt Options) string {
-	if len(str) < opt.s {
+	if len(str) < opt.skipChars {
 		return ""
 	}
-	return str[opt.s:]
+	if opt.caseInsensitive {
+		str = strings.ToLower(str)
+	}
+	return str[opt.skipChars:]
 }
 
 func updateAns(res []string, opt Options, occurrences int, str string) []string {
-	if opt.c {
-		res = append(res, strconv.Itoa(occurrences)+" "+str)
-	}
-	if opt.u && occurrences == 1 || opt.d && occurrences > 1 || !opt.d && !opt.c && !opt.u {
+	switch {
+	case opt.uniqStrings && occurrences == 1,
+		opt.repeatedStrings && occurrences > 1,
+		!opt.repeatedStrings && !opt.countOccurrences && !opt.uniqStrings:
+
 		res = append(res, str)
+
+	case opt.countOccurrences:
+
+		res = append(res, fmt.Sprintf("%d %s", occurrences, str))
 	}
+
 	return res
 }
 
 func isValidOptions(options Options) bool {
-	if options.c && options.d || options.c && options.u || options.u && options.d || options.d && options.i && options.c {
+	switch {
+	case options.countOccurrences && options.repeatedStrings,
+		options.countOccurrences && options.uniqStrings,
+		options.uniqStrings && options.repeatedStrings,
+		options.repeatedStrings && options.uniqStrings && options.caseInsensitive:
+
 		return false
 	}
 	return true
 }
 
-func Uniq(stringSlc []string, opt Options) []string {
+func Uniq(stringSlc []string, opt Options) ([]string, error) {
 	if !isValidOptions(opt) {
-		return []string{"wrong flag sequence provided"}
+		return []string{""}, errors.New("wrong flag sequence provided")
 	}
-	res := []string{}
-	occurrences := 1
-	prev := skipChars(skipFields(stringSlc[0], opt), opt) // сначала скипаем поля, потом символы
-	prevPos := 0
-	for i := 1; i < len(stringSlc); i++ {
-		now := skipChars(skipFields(stringSlc[i], opt), opt)
 
-		if opt.i {
-			prev, now = strings.ToLower(prev), strings.ToLower(now)
-		}
+	var (
+		res         []string
+		occurrences = 1
+		prev        = skipChars(skipFields(stringSlc[0], opt), opt)
+		prevPos     = 0
+	)
+
+	for i, str := range stringSlc[1:] {
+		now := skipChars(skipFields(str, opt), opt)
 
 		if now == prev {
 			occurrences++
 		} else {
 			res = updateAns(res, opt, occurrences, stringSlc[prevPos])
 			prev = now
-			prevPos = i
+			prevPos = i + 1 // т.к в range i начинается с 0
 			occurrences = 1
 		}
 	}
 	res = updateAns(res, opt, occurrences, stringSlc[prevPos])
-	return res
+
+	return res, nil
 }
