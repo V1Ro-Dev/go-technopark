@@ -39,7 +39,7 @@ func GetParsedFlags() (Options, error) {
 		options.uniqStrings && options.repeatedStrings,
 		options.repeatedStrings && options.uniqStrings && options.caseInsensitive:
 
-		return options, errors.New("wrong flag sequence provided")
+		return options, errors.New("'c', 'd', 'u' flags should be used separately")
 	}
 
 	return options, nil

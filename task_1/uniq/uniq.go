@@ -54,7 +54,7 @@ func isValidOptions(options Options) bool {
 
 func Uniq(stringSlc []string, opt Options) ([]string, error) {
 	if !isValidOptions(opt) {
-		return []string{""}, errors.New("wrong flag sequence provided")
+		return []string{""}, errors.New("'c', 'd', 'u' flags should be used separately")
 	}
 
 	var (
