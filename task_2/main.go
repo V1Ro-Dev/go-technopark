@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"go-technopark/task_2/collections"
+	"log"
 	"os"
 	"strconv"
 	"unicode"
@@ -43,11 +44,13 @@ func isValidStr(s string) bool {
 		"8": true,
 		"9": true,
 	}
+
 	for _, ch := range s {
 		if !chars[string(ch)] {
 			return false
 		}
 	}
+
 	return true
 }
 
@@ -59,19 +62,37 @@ func isValidOperators(s string) bool {
 		"/": true,
 		".": true,
 	}
-	for i := 1; i < len(s); i++ {
-		if operators[string(s[i])] && operators[string(s[i-1])] {
+
+	for i, _ := range s[:len(s)-1] {
+		if operators[string(s[i])] && operators[string(s[i+1])] {
 			return false
 		}
 	}
+
 	if string(s[0]) != "-" && (operators[string(s[0])] || operators[string(s[len(s)-1])]) {
 		return false
 	}
+
 	return true
 }
 
-func isValid(str string) bool {
-	return len(str) > 0 && isValidStr(str) && isValidParentheses(str) && isValidOperators(str)
+func isValid(str string) error {
+	switch {
+	case len(str) == 0:
+		return errors.New("empty expression was given")
+
+	case !isValidStr(str):
+		return errors.New("incorrect chars were used in the expression")
+
+	case !isValidOperators(str):
+		return errors.New("incorrect usage of operators")
+
+	case !isValidParentheses(str):
+		return errors.New("incorrect parenthesis sequence was given")
+
+	default:
+		return nil
+	}
 }
 
 func getPriorities() map[string]int {
@@ -86,10 +107,7 @@ func getPriorities() map[string]int {
 }
 
 func parseExpression(str string) []string {
-	if !isValidStr(str) {
-		return []string{""}
-	}
-	newExpression := []string{}
+	var newExpression []string
 	num := ""
 	if string(str[0]) == "-" { // заменяем "-" в начале строки на "0-"
 		str = "0" + str
@@ -97,23 +115,25 @@ func parseExpression(str string) []string {
 	for i, char := range str {
 		if unicode.IsDigit(char) || string(char) == "." {
 			num += string(char)
-		} else {
-			if num != "" {
-				newExpression = append(newExpression, num)
-				newExpression = append(newExpression, string(char))
-				num = ""
-			} else {
-				if string(char) == "-" && string(str[i-1]) == "(" { // обработка случая, когда "-" идет сразу после скобки
-					num = "-"
-					continue
-				}
-				newExpression = append(newExpression, string(char))
-			}
+			continue
 		}
+
+		if num != "" {
+			newExpression = append(newExpression, num)
+			num = ""
+		}
+
+		if string(char) == "-" && string(str[i-1]) == "(" { // обработка случая, когда "-" идет сразу после скобки
+			num = "-"
+			continue
+		}
+		newExpression = append(newExpression, string(char))
 	}
+
 	if num != "" {
 		newExpression = append(newExpression, num)
 	}
+
 	return newExpression
 }
 
@@ -140,35 +160,43 @@ func calc(operator string, operands *collections.Stack[float64]) error {
 		res = operand2 / operand1
 	}
 	operands.Push(res)
+
 	return nil
 }
 
-func calculate(slicedExpression []string) float64 {
+func calculate(expression string) (float64, error) {
+	if err := isValid(expression); err != nil {
+		return 0, err
+	}
+
+	slicedExpression := parseExpression(expression)
 	priorities := getPriorities()
 	operators := collections.Stack[string]{}
 	operands := collections.Stack[float64]{}
 
 	for _, str := range slicedExpression {
-		if num, err := strconv.ParseFloat(str, 64); err == nil {
+		switch num, err := strconv.ParseFloat(str, 64); {
+
+		case err == nil:
 			operands.Push(num)
-		} else if str == "(" {
+
+		case str == "(":
 			operators.Push(str)
-		} else if str == ")" {
+
+		case str == ")":
 			for !operators.IsEmpty() && operators.Top() != "(" {
 				operator := operators.Pop()
-				err = calc(operator, &operands)
-				if err != nil {
-					fmt.Println(err)
-					return 0
+				if err = calc(operator, &operands); err != nil {
+					return 0, err
 				}
 			}
 			_ = operators.Pop()
-		} else {
+
+		default:
 			for !operators.IsEmpty() && priorities[str] <= priorities[operators.Top()] {
 				operator := operators.Pop()
-				err := calc(operator, &operands)
-				if err != nil {
-					return 0
+				if err = calc(operator, &operands); err != nil {
+					return 0, err
 				}
 			}
 			operators.Push(str)
@@ -177,24 +205,24 @@ func calculate(slicedExpression []string) float64 {
 
 	for !operators.IsEmpty() {
 		operator := operators.Pop()
-		err := calc(operator, &operands)
-		if err != nil {
-			fmt.Println(err)
-			return 0
+		if err := calc(operator, &operands); err != nil {
+			return 0, err
 		}
 	}
-	return operands.Pop()
+
+	return operands.Pop(), nil
 }
 
 func main() {
 	if len(os.Args) < 2 {
-		fmt.Println("empty expression was given")
-		return
+		log.Fatal("empty expression was given")
 	}
+
 	expression := os.Args[1]
-	if !isValid(expression) {
-		fmt.Println("Wrong expression was given")
-		return
+	result, err := calculate(expression)
+	if err != nil {
+		log.Fatal(err)
 	}
-	fmt.Println(calculate(parseExpression(expression)))
+
+	fmt.Println(result)
 }
