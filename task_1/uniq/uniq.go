@@ -7,24 +7,31 @@ import (
 )
 
 func skipFields(str string, opt Options) string {
+
 	fields := strings.Split(str, " ")
+
 	if len(fields) < opt.skipFields {
 		return ""
 	}
+
 	return strings.Join(fields[opt.skipFields:], " ")
 }
 
 func skipChars(str string, opt Options) string {
+
 	if len(str) < opt.skipChars {
 		return ""
 	}
+
 	if opt.caseInsensitive {
 		str = strings.ToLower(str)
 	}
+
 	return str[opt.skipChars:]
 }
 
 func updateAns(res []string, opt Options, occurrences int, str string) []string {
+
 	switch {
 	case opt.uniqStrings && occurrences == 1,
 		opt.repeatedStrings && occurrences > 1,
@@ -41,6 +48,7 @@ func updateAns(res []string, opt Options, occurrences int, str string) []string 
 }
 
 func isValidOptions(options Options) bool {
+
 	switch {
 	case options.countOccurrences && options.repeatedStrings,
 		options.countOccurrences && options.uniqStrings,
@@ -49,10 +57,12 @@ func isValidOptions(options Options) bool {
 
 		return false
 	}
+
 	return true
 }
 
 func Uniq(stringSlc []string, opt Options) ([]string, error) {
+
 	if !isValidOptions(opt) {
 		return []string{""}, errors.New("'c', 'd', 'u' flags should be used separately")
 	}
@@ -64,18 +74,24 @@ func Uniq(stringSlc []string, opt Options) ([]string, error) {
 		prevPos     = 0
 	)
 
-	for i, str := range stringSlc[1:] {
+	for i, str := range stringSlc {
+		if i == 0 {
+			continue
+		}
+
 		now := skipChars(skipFields(str, opt), opt)
 
 		if now == prev {
 			occurrences++
-		} else {
-			res = updateAns(res, opt, occurrences, stringSlc[prevPos])
-			prev = now
-			prevPos = i + 1 // т.к в range i начинается с 0
-			occurrences = 1
+			continue
 		}
+
+		res = updateAns(res, opt, occurrences, stringSlc[prevPos])
+		prev = now
+		prevPos = i
+		occurrences = 1
 	}
+
 	res = updateAns(res, opt, occurrences, stringSlc[prevPos])
 
 	return res, nil

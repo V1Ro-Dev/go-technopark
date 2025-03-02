@@ -5,12 +5,13 @@ import (
 	"fmt"
 	"go-technopark/task_2/collections"
 	"log"
+	"math/big"
 	"os"
-	"strconv"
 	"unicode"
 )
 
 func isValidParentheses(s string) bool {
+
 	cnt := 0
 	for _, ch := range s {
 		if string(ch) == "(" {
@@ -25,6 +26,7 @@ func isValidParentheses(s string) bool {
 }
 
 func isValidStr(s string) bool {
+
 	chars := map[string]bool{
 		"+": true,
 		"-": true,
@@ -55,6 +57,7 @@ func isValidStr(s string) bool {
 }
 
 func isValidOperators(s string) bool {
+
 	operators := map[string]bool{
 		"+": true,
 		"-": true,
@@ -77,6 +80,7 @@ func isValidOperators(s string) bool {
 }
 
 func isValid(str string) error {
+
 	switch {
 	case len(str) == 0:
 		return errors.New("empty expression was given")
@@ -96,6 +100,7 @@ func isValid(str string) error {
 }
 
 func getPriorities() map[string]int {
+
 	return map[string]int{
 		"+": 0,
 		"-": 0,
@@ -107,11 +112,14 @@ func getPriorities() map[string]int {
 }
 
 func parseExpression(str string) []string {
+
 	var newExpression []string
 	num := ""
+
 	if string(str[0]) == "-" { // заменяем "-" в начале строки на "0-"
 		str = "0" + str
 	}
+
 	for i, char := range str {
 		if unicode.IsDigit(char) || string(char) == "." {
 			num += string(char)
@@ -137,45 +145,47 @@ func parseExpression(str string) []string {
 	return newExpression
 }
 
-func calc(operator string, operands *collections.Stack[float64]) error {
+func calc(operator string, operands *collections.Stack[*big.Float]) error {
+
 	operand1 := operands.Pop()
 	operand2 := operands.Pop()
-	res := 0.0
+	res := new(big.Float)
 
 	switch operator {
 	case "+":
-		res = operand2 + operand1
+		res = new(big.Float).Add(operand2, operand1)
 
 	case "-":
-		res = operand2 - operand1
+		res = new(big.Float).Sub(operand2, operand1)
 
 	case "*":
-		res = operand2 * operand1
+		res = new(big.Float).Mul(operand2, operand1)
 
 	case "/":
-		if operand1 == 0 {
+		if operand1.Cmp(big.NewFloat(0)) == 0 {
 			err := errors.New("division by zero")
 			return err
 		}
-		res = operand2 / operand1
+		res = new(big.Float).Quo(operand2, operand1)
 	}
 	operands.Push(res)
 
 	return nil
 }
 
-func calculate(expression string) (float64, error) {
+func calculate(expression string) (*big.Float, error) {
+
 	if err := isValid(expression); err != nil {
-		return 0, err
+		return big.NewFloat(0), err
 	}
 
 	slicedExpression := parseExpression(expression)
 	priorities := getPriorities()
 	operators := collections.Stack[string]{}
-	operands := collections.Stack[float64]{}
+	operands := collections.Stack[*big.Float]{}
 
 	for _, str := range slicedExpression {
-		switch num, err := strconv.ParseFloat(str, 64); {
+		switch num, _, err := big.ParseFloat(str, 10, 53, big.ToNearestEven); {
 
 		case err == nil:
 			operands.Push(num)
@@ -187,7 +197,7 @@ func calculate(expression string) (float64, error) {
 			for !operators.IsEmpty() && operators.Top() != "(" {
 				operator := operators.Pop()
 				if err = calc(operator, &operands); err != nil {
-					return 0, err
+					return big.NewFloat(0), err
 				}
 			}
 			_ = operators.Pop()
@@ -196,7 +206,7 @@ func calculate(expression string) (float64, error) {
 			for !operators.IsEmpty() && priorities[str] <= priorities[operators.Top()] {
 				operator := operators.Pop()
 				if err = calc(operator, &operands); err != nil {
-					return 0, err
+					return big.NewFloat(0), err
 				}
 			}
 			operators.Push(str)
@@ -206,7 +216,7 @@ func calculate(expression string) (float64, error) {
 	for !operators.IsEmpty() {
 		operator := operators.Pop()
 		if err := calc(operator, &operands); err != nil {
-			return 0, err
+			return big.NewFloat(0), err
 		}
 	}
 
@@ -214,6 +224,7 @@ func calculate(expression string) (float64, error) {
 }
 
 func main() {
+
 	if len(os.Args) < 2 {
 		log.Fatal("empty expression was given")
 	}

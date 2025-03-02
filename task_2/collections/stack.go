@@ -1,6 +1,6 @@
 package collections
 
-type Stack[T string | float64] struct {
+type Stack[T any] struct {
 	buffer []T
 }
 
