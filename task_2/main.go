@@ -10,45 +10,53 @@ import (
 	"unicode"
 )
 
-func isValidParentheses(s string) bool {
+const (
+	Add = "+"
+	Sub = "-"
+	Mul = "*"
+	Div = "/"
+)
 
+func isValidParentheses(s string) bool {
 	cnt := 0
 	for _, ch := range s {
-		if string(ch) == "(" {
+		if ch == '(' {
 			cnt++
-		} else if string(ch) == ")" {
+		}
+		if ch == ')' {
 			cnt--
-		} else if cnt < 0 {
+		}
+		if cnt < 0 {
 			return false
 		}
 	}
+
 	return cnt == 0
 }
 
 func isValidStr(s string) bool {
-
-	chars := map[string]bool{
-		"+": true,
-		"-": true,
-		"*": true,
-		"/": true,
-		"(": true,
-		")": true,
-		".": true,
-		"0": true,
-		"1": true,
-		"2": true,
-		"3": true,
-		"4": true,
-		"5": true,
-		"6": true,
-		"7": true,
-		"8": true,
-		"9": true,
+	chars := map[rune]bool{
+		'+': true,
+		'-': true,
+		'*': true,
+		'/': true,
+		'(': true,
+		')': true,
+		'.': true,
+		'0': true,
+		'1': true,
+		'2': true,
+		'3': true,
+		'4': true,
+		'5': true,
+		'6': true,
+		'7': true,
+		'8': true,
+		'9': true,
 	}
 
 	for _, ch := range s {
-		if !chars[string(ch)] {
+		if !chars[ch] {
 			return false
 		}
 	}
@@ -57,7 +65,6 @@ func isValidStr(s string) bool {
 }
 
 func isValidOperators(s string) bool {
-
 	operators := map[string]bool{
 		"+": true,
 		"-": true,
@@ -80,7 +87,6 @@ func isValidOperators(s string) bool {
 }
 
 func isValid(str string) error {
-
 	switch {
 	case len(str) == 0:
 		return errors.New("empty expression was given")
@@ -100,7 +106,6 @@ func isValid(str string) error {
 }
 
 func getPriorities() map[string]int {
-
 	return map[string]int{
 		"+": 0,
 		"-": 0,
@@ -112,7 +117,6 @@ func getPriorities() map[string]int {
 }
 
 func parseExpression(str string) []string {
-
 	var newExpression []string
 	num := ""
 
@@ -146,25 +150,23 @@ func parseExpression(str string) []string {
 }
 
 func calc(operator string, operands *collections.Stack[*big.Float]) error {
-
 	operand1 := operands.Pop()
 	operand2 := operands.Pop()
 	res := new(big.Float)
 
 	switch operator {
-	case "+":
+	case Add:
 		res = new(big.Float).Add(operand2, operand1)
 
-	case "-":
+	case Sub:
 		res = new(big.Float).Sub(operand2, operand1)
 
-	case "*":
+	case Mul:
 		res = new(big.Float).Mul(operand2, operand1)
 
-	case "/":
+	case Div:
 		if operand1.Cmp(big.NewFloat(0)) == 0 {
-			err := errors.New("division by zero")
-			return err
+			return errors.New("division by zero")
 		}
 		res = new(big.Float).Quo(operand2, operand1)
 	}
@@ -174,7 +176,6 @@ func calc(operator string, operands *collections.Stack[*big.Float]) error {
 }
 
 func calculate(expression string) (*big.Float, error) {
-
 	if err := isValid(expression); err != nil {
 		return big.NewFloat(0), err
 	}
@@ -224,7 +225,6 @@ func calculate(expression string) (*big.Float, error) {
 }
 
 func main() {
-
 	if len(os.Args) < 2 {
 		log.Fatal("empty expression was given")
 	}

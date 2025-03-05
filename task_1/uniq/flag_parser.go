@@ -33,11 +33,10 @@ func GetParsedFlags() (Options, error) {
 		caseInsensitive:  *iFlag,
 	}
 
-	switch {
-	case options.countOccurrences && options.repeatedStrings,
-		options.countOccurrences && options.uniqStrings,
-		options.uniqStrings && options.repeatedStrings,
-		options.repeatedStrings && options.uniqStrings && options.caseInsensitive:
+	if (options.countOccurrences && options.repeatedStrings) ||
+		(options.countOccurrences && options.uniqStrings) ||
+		(options.uniqStrings && options.repeatedStrings) ||
+		options.repeatedStrings && options.uniqStrings && options.caseInsensitive {
 
 		return options, errors.New("'c', 'd', 'u' flags should be used separately")
 	}

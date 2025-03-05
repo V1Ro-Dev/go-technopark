@@ -11,7 +11,6 @@ import (
 )
 
 func getStrings(in io.Reader) ([]string, error) {
-
 	scanner := bufio.NewScanner(in)
 	var res []string
 
@@ -27,10 +26,13 @@ func getStrings(in io.Reader) ([]string, error) {
 }
 
 func input() (io.ReadCloser, io.WriteCloser, error) {
-
 	in := os.Stdin
 	out := os.Stdout
 	var err error
+
+	if len(flag.Args()) > 2 {
+		return nil, nil, fmt.Errorf("Too mush params\nUsage: go run task_1.go [-c | -d | -u] [-i] [-f num] [-s chars] [input_file [output_file]]")
+	}
 
 	if len(flag.Args()) == 1 {
 		in, err = os.Open(flag.Args()[0])
@@ -50,24 +52,19 @@ func input() (io.ReadCloser, io.WriteCloser, error) {
 		}
 	}
 
-	if len(flag.Args()) > 2 {
-		return nil, nil, fmt.Errorf("Too mush params\nUsage: go run task_1.go [-c | -d | -u] [-i] [-f num] [-s chars] [input_file [output_file]]")
-	}
-
 	return in, out, nil
 }
 
-func output(out io.Writer, str string) {
-	var err error
-
-	_, err = out.Write([]byte(str + "\n"))
+func output(out io.Writer, str string) error {
+	_, err := out.Write([]byte(str + "\n"))
 	if err != nil {
-		log.Fatal(err)
+		return fmt.Errorf(err.Error())
 	}
+
+	return nil
 }
 
 func main() {
-
 	options, err := uniq.GetParsedFlags()
 	if err != nil {
 		log.Fatal(err, "\nCorrect usage: go run main.go [-c | -d | -u] [-i] [-f num] [-s chars] [input_file [output_file]]")
@@ -96,7 +93,10 @@ func main() {
 	}
 
 	for _, str := range uniqStrings {
-		output(out, str)
+		err = output(out, str)
+		if err != nil {
+			log.Fatal(err)
+		}
 	}
 
 }
