@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"errors"
 	"flag"
 	"fmt"
 	"go-technopark/task_1/uniq"
@@ -31,7 +32,7 @@ func input() (io.ReadCloser, io.WriteCloser, error) {
 	var err error
 
 	if len(flag.Args()) > 2 {
-		return nil, nil, fmt.Errorf("Too mush params\nUsage: go run task_1.go [-c | -d | -u] [-i] [-f num] [-s chars] [input_file [output_file]]")
+		return nil, nil, errors.New("Too mush params\nUsage: go run task_1.go [-c | -d | -u] [-i] [-f num] [-s chars] [input_file [output_file]]")
 	}
 
 	if len(flag.Args()) == 1 {
@@ -58,7 +59,7 @@ func input() (io.ReadCloser, io.WriteCloser, error) {
 func output(out io.Writer, str string) error {
 	_, err := out.Write([]byte(str + "\n"))
 	if err != nil {
-		return fmt.Errorf(err.Error())
+		return fmt.Errorf("ошибка при записи в выходной поток: %w", err)
 	}
 
 	return nil
