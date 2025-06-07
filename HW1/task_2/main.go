@@ -3,7 +3,7 @@ package main
 import (
 	"errors"
 	"fmt"
-	"go-technopark/task_2/collections"
+	"go-technopark/HW1/task_2/collections"
 	"log"
 	"math/big"
 	"os"

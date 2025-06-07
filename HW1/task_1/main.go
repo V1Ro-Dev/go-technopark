@@ -5,7 +5,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"go-technopark/task_1/uniq"
+	uniq2 "go-technopark/HW1/task_1/uniq"
 	"io"
 	"log"
 	"os"
@@ -66,7 +66,7 @@ func output(out io.Writer, str string) error {
 }
 
 func main() {
-	options, err := uniq.GetParsedFlags()
+	options, err := uniq2.GetParsedFlags()
 	if err != nil {
 		log.Fatal(err, "\nCorrect usage: go run main.go [-c | -d | -u] [-i] [-f num] [-s chars] [input_file [output_file]]")
 	}
@@ -88,7 +88,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	uniqStrings, err := uniq.Uniq(strings, options)
+	uniqStrings, err := uniq2.Uniq(strings, options)
 	if err != nil {
 		log.Fatal(err)
 	}
